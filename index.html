@@ -369,7 +369,8 @@ button:disabled {
     ├── index.html
     └── ffmpeg/
         ├── ffmpeg-core.js
-        └── ffmpeg-core.wasm
+        ├── ffmpeg-core.part1.wasm
+        └── ffmpeg-core.part2.wasm
 */
 
 const FFmpegWrapperURL =
@@ -378,18 +379,16 @@ const FFmpegWrapperURL =
 const FFmpegUtilURL =
     "https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.2/+esm";
 
+
 /*
-    IMPORTANT:
-    These are resolved from the actual page URL.
+    FFmpeg core JavaScript is loaded directly.
 
-    If the page is:
+    The WASM is split into two files because the
+    original WASM file cannot be uploaded directly.
 
-    https://username.github.io/random-video/
+    The two files are reconstructed in memory:
 
-    the resulting URLs become:
-
-    https://username.github.io/random-video/ffmpeg/ffmpeg-core.js
-    https://username.github.io/random-video/ffmpeg/ffmpeg-core.wasm
+        part1 + part2 = original ffmpeg-core.wasm
 */
 
 const coreURL = new URL(
@@ -397,8 +396,13 @@ const coreURL = new URL(
     window.location.href
 ).href;
 
-const wasmURL = new URL(
-    "./ffmpeg/ffmpeg-core.wasm",
+const wasmPart1URL = new URL(
+    "./ffmpeg/ffmpeg-core.part1.wasm",
+    window.location.href
+).href;
+
+const wasmPart2URL = new URL(
+    "./ffmpeg/ffmpeg-core.part2.wasm",
     window.location.href
 ).href;
 
@@ -409,6 +413,8 @@ let fetchFileFunction = null;
 let ffmpeg = null;
 let ffmpegLoaded = false;
 let ffmpegLoadingPromise = null;
+
+let reconstructedWasmURL = null;
 
 
 const fileInput =
@@ -464,15 +470,11 @@ const download =
 
 
 let selectedFile = null;
-
 let sourceURL = null;
-
 let outputURL = null;
 
 let videoDuration = 0;
-
 let videoWidth = 0;
-
 let videoHeight = 0;
 
 let generating = false;
@@ -540,7 +542,7 @@ function filterNumber(value) {
 
 
 /*
-    Load only the JavaScript wrapper first.
+    Load the FFmpeg JavaScript wrapper.
 */
 
 async function importFFmpegLibrary() {
@@ -630,11 +632,134 @@ function createFFmpegInstance() {
 
 
 /*
-    Load the self-hosted processor.
+    Download and reconstruct the split WASM.
 
-    NO TIMEOUT.
-    If initialization takes a long time,
-    it is allowed to continue.
+    No conversion to text.
+    No Base64.
+    No hex.
+    No modification.
+
+    The exact bytes are combined:
+
+        part1 + part2
+*/
+
+async function reconstructWasm() {
+
+    setProcessorStatus(
+        "Downloading FFmpeg processor parts..."
+    );
+
+    setProcessorProgress(10);
+
+
+    const [
+        part1Response,
+        part2Response
+    ] = await Promise.all([
+
+        fetch(wasmPart1URL),
+
+        fetch(wasmPart2URL)
+
+    ]);
+
+
+    if (!part1Response.ok) {
+
+        throw new Error(
+            `Could not load ffmpeg-core.part1.wasm ` +
+            `(${part1Response.status})`
+        );
+
+    }
+
+
+    if (!part2Response.ok) {
+
+        throw new Error(
+            `Could not load ffmpeg-core.part2.wasm ` +
+            `(${part2Response.status})`
+        );
+
+    }
+
+
+    setProcessorStatus(
+        "Reading FFmpeg processor parts..."
+    );
+
+    setProcessorProgress(35);
+
+
+    const [
+        part1,
+        part2
+    ] = await Promise.all([
+
+        part1Response.arrayBuffer(),
+
+        part2Response.arrayBuffer()
+
+    ]);
+
+
+    if (
+        part1.byteLength === 0 ||
+        part2.byteLength === 0
+    ) {
+
+        throw new Error(
+            "One of the FFmpeg WASM parts is empty."
+        );
+
+    }
+
+
+    /*
+        Reconstruct the original WASM exactly.
+    */
+
+    setProcessorStatus(
+        "Reconstructing FFmpeg processor..."
+    );
+
+    setProcessorProgress(55);
+
+
+    const combinedWasm =
+        new Blob(
+            [
+                part1,
+                part2
+            ],
+            {
+                type: "application/wasm"
+            }
+        );
+
+
+    reconstructedWasmURL =
+        URL.createObjectURL(
+            combinedWasm
+        );
+
+
+    setProcessorProgress(70);
+
+
+    return reconstructedWasmURL;
+}
+
+
+/*
+    Load FFmpeg.
+
+    IMPORTANT:
+    There is deliberately NO timeout.
+
+    If the processor is making progress or simply
+    taking a long time, it is allowed to continue.
 */
 
 function loadFFmpeg() {
@@ -663,31 +788,42 @@ function loadFFmpeg() {
                 );
 
                 console.log(
-                    "FFmpeg WASM URL:",
-                    wasmURL
+                    "FFmpeg WASM part 1:",
+                    wasmPart1URL
                 );
 
-
-                setProcessorProgress(10);
-
-                setProcessorStatus(
-                    "Loading processor..."
+                console.log(
+                    "FFmpeg WASM part 2:",
+                    wasmPart2URL
                 );
 
 
                 /*
-                    This is intentionally NOT using
-                    toBlobURL().
+                    Rebuild the WASM in memory.
+                */
 
-                    The files are being served from
-                    the same GitHub Pages origin.
+                const reconstructedURL =
+                    await reconstructWasm();
+
+
+                setProcessorStatus(
+                    "Initializing FFmpeg..."
+                );
+
+                setProcessorProgress(80);
+
+
+                /*
+                    Pass the reconstructed WASM
+                    to FFmpeg.
                 */
 
                 await ffmpeg.load({
 
                     coreURL: coreURL,
 
-                    wasmURL: wasmURL
+                    wasmURL:
+                        reconstructedURL
 
                 });
 
@@ -707,6 +843,23 @@ function loadFFmpeg() {
                 }
 
 
+                /*
+                    The Blob URL is no longer needed
+                    after FFmpeg has loaded.
+                */
+
+                if (reconstructedWasmURL) {
+
+                    URL.revokeObjectURL(
+                        reconstructedWasmURL
+                    );
+
+                    reconstructedWasmURL =
+                        null;
+
+                }
+
+
                 return true;
 
             } catch (error) {
@@ -721,7 +874,8 @@ function loadFFmpeg() {
                 );
 
                 setStatus(
-                    "The processor could not initialize. Check the browser console for the exact error."
+                    "The processor could not initialize. " +
+                    "Check the browser console for the exact error."
                 );
 
                 return false;
@@ -788,7 +942,7 @@ fileInput.addEventListener(
 
         /*
             Start FFmpeg loading immediately
-            while the browser reads the video metadata.
+            while the browser reads the video.
         */
 
         loadFFmpeg();
@@ -941,11 +1095,6 @@ async function createPlan() {
                 break;
             }
 
-
-            /*
-                Yield occasionally so the
-                browser UI stays responsive.
-            */
 
             if (
                 attempts %
@@ -1534,10 +1683,7 @@ setMainProgress(0);
 
 
 /*
-    Helpful diagnostic information.
-
-    These appear in the browser console and make
-    incorrect GitHub paths immediately obvious.
+    Diagnostic information.
 */
 
 console.log(
@@ -1550,8 +1696,13 @@ console.log(
 );
 
 console.log(
-    "FFmpeg WASM:",
-    wasmURL
+    "FFmpeg WASM part 1:",
+    wasmPart1URL
+);
+
+console.log(
+    "FFmpeg WASM part 2:",
+    wasmPart2URL
 );
 
 </script>
