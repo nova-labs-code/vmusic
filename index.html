@@ -361,16 +361,12 @@ button:disabled {
 <script type="module">
 
 /*
-    FFmpeg configuration
+    FFmpeg files:
 
-    Expected GitHub Pages structure:
-
-    /
-    ├── index.html
-    └── ffmpeg/
-        ├── ffmpeg-core.js
-        ├── ffmpeg-core.part1.wasm
-        └── ffmpeg-core.part2.wasm
+    ffmpeg/
+    ├── ffmpeg-core.js
+    ├── ffmpeg-core.part1.wasm
+    └── ffmpeg-core.part2.wasm
 */
 
 const FFmpegWrapperURL =
@@ -379,17 +375,6 @@ const FFmpegWrapperURL =
 const FFmpegUtilURL =
     "https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.2/+esm";
 
-
-/*
-    FFmpeg core JavaScript is loaded directly.
-
-    The WASM is split into two files because the
-    original WASM file cannot be uploaded directly.
-
-    The two files are reconstructed in memory:
-
-        part1 + part2 = original ffmpeg-core.wasm
-*/
 
 const coreURL = new URL(
     "./ffmpeg/ffmpeg-core.js",
@@ -413,6 +398,12 @@ let fetchFileFunction = null;
 let ffmpeg = null;
 let ffmpegLoaded = false;
 let ffmpegLoadingPromise = null;
+
+
+/*
+    Keep the reconstructed WASM data URL alive
+    for the entire FFmpeg session.
+*/
 
 let reconstructedWasmURL = null;
 
@@ -542,7 +533,7 @@ function filterNumber(value) {
 
 
 /*
-    Load the FFmpeg JavaScript wrapper.
+    Load FFmpeg JavaScript libraries.
 */
 
 async function importFFmpegLibrary() {
@@ -578,7 +569,7 @@ async function importFFmpegLibrary() {
 
 
 /*
-    Create FFmpeg only once.
+    Create FFmpeg instance.
 */
 
 function createFFmpegInstance() {
@@ -632,16 +623,52 @@ function createFFmpegInstance() {
 
 
 /*
-    Download and reconstruct the split WASM.
+    Convert the reconstructed bytes to a
+    data URL.
 
-    No conversion to text.
-    No Base64.
-    No hex.
-    No modification.
+    This avoids relying on a Blob URL inside
+    the FFmpeg worker.
+*/
 
-    The exact bytes are combined:
+function arrayBufferToBase64(buffer) {
 
-        part1 + part2
+    const bytes =
+        new Uint8Array(buffer);
+
+    const chunkSize =
+        0x8000;
+
+    let binary = "";
+
+    for (
+        let i = 0;
+        i < bytes.length;
+        i += chunkSize
+    ) {
+
+        const chunk =
+            bytes.subarray(
+                i,
+                Math.min(
+                    i + chunkSize,
+                    bytes.length
+                )
+            );
+
+        binary +=
+            String.fromCharCode(
+                ...chunk
+            );
+
+    }
+
+    return btoa(binary);
+}
+
+
+/*
+    Download both WASM pieces and reconstruct
+    the original WASM in memory.
 */
 
 async function reconstructWasm() {
@@ -658,9 +685,19 @@ async function reconstructWasm() {
         part2Response
     ] = await Promise.all([
 
-        fetch(wasmPart1URL),
+        fetch(
+            wasmPart1URL,
+            {
+                cache: "force-cache"
+            }
+        ),
 
-        fetch(wasmPart2URL)
+        fetch(
+            wasmPart2URL,
+            {
+                cache: "force-cache"
+            }
+        )
 
     ]);
 
@@ -689,7 +726,7 @@ async function reconstructWasm() {
         "Reading FFmpeg processor parts..."
     );
 
-    setProcessorProgress(35);
+    setProcessorProgress(30);
 
 
     const [
@@ -716,36 +753,89 @@ async function reconstructWasm() {
     }
 
 
-    /*
-        Reconstruct the original WASM exactly.
-    */
-
     setProcessorStatus(
-        "Reconstructing FFmpeg processor..."
+        "Combining FFmpeg processor parts..."
     );
 
-    setProcessorProgress(55);
+    setProcessorProgress(50);
 
 
-    const combinedWasm =
-        new Blob(
-            [
-                part1,
-                part2
-            ],
-            {
-                type: "application/wasm"
-            }
+    /*
+        EXACT byte order:
+
+        original WASM =
+        part1 + part2
+    */
+
+    const combined =
+        new Uint8Array(
+            part1.byteLength +
+            part2.byteLength
+        );
+
+
+    combined.set(
+        new Uint8Array(part1),
+        0
+    );
+
+
+    combined.set(
+        new Uint8Array(part2),
+        part1.byteLength
+    );
+
+
+    /*
+        Verify the reconstructed WASM header.
+
+        A WebAssembly binary must begin with:
+
+        00 61 73 6D
+    */
+
+    if (
+        combined[0] !== 0x00 ||
+        combined[1] !== 0x61 ||
+        combined[2] !== 0x73 ||
+        combined[3] !== 0x6d
+    ) {
+
+        throw new Error(
+            "The reconstructed WASM does not have a valid WebAssembly header. " +
+            "Make sure part1 comes before part2 and both files came from the same original WASM."
+        );
+
+    }
+
+
+    setProcessorStatus(
+        "Preparing reconstructed WASM..."
+    );
+
+    setProcessorProgress(65);
+
+
+    /*
+        Convert the exact bytes to Base64.
+
+        Nothing about the WASM itself is changed.
+        Base64 is only the transport format for
+        the data URL.
+    */
+
+    const base64 =
+        arrayBufferToBase64(
+            combined.buffer
         );
 
 
     reconstructedWasmURL =
-        URL.createObjectURL(
-            combinedWasm
-        );
+        "data:application/wasm;base64," +
+        base64;
 
 
-    setProcessorProgress(70);
+    setProcessorProgress(75);
 
 
     return reconstructedWasmURL;
@@ -755,11 +845,7 @@ async function reconstructWasm() {
 /*
     Load FFmpeg.
 
-    IMPORTANT:
-    There is deliberately NO timeout.
-
-    If the processor is making progress or simply
-    taking a long time, it is allowed to continue.
+    There is NO timeout.
 */
 
 function loadFFmpeg() {
@@ -798,11 +884,7 @@ function loadFFmpeg() {
                 );
 
 
-                /*
-                    Rebuild the WASM in memory.
-                */
-
-                const reconstructedURL =
+                const wasmURL =
                     await reconstructWasm();
 
 
@@ -814,16 +896,16 @@ function loadFFmpeg() {
 
 
                 /*
-                    Pass the reconstructed WASM
-                    to FFmpeg.
+                    FFmpeg receives the reconstructed
+                    WASM as a data URL instead of a
+                    Blob URL.
                 */
 
                 await ffmpeg.load({
 
                     coreURL: coreURL,
 
-                    wasmURL:
-                        reconstructedURL
+                    wasmURL: wasmURL
 
                 });
 
@@ -843,23 +925,6 @@ function loadFFmpeg() {
                 }
 
 
-                /*
-                    The Blob URL is no longer needed
-                    after FFmpeg has loaded.
-                */
-
-                if (reconstructedWasmURL) {
-
-                    URL.revokeObjectURL(
-                        reconstructedWasmURL
-                    );
-
-                    reconstructedWasmURL =
-                        null;
-
-                }
-
-
                 return true;
 
             } catch (error) {
@@ -874,8 +939,11 @@ function loadFFmpeg() {
                 );
 
                 setStatus(
-                    "The processor could not initialize. " +
-                    "Check the browser console for the exact error."
+                    "The processor could not initialize: " +
+                    (
+                        error?.message ||
+                        "Unknown error"
+                    )
                 );
 
                 return false;
@@ -894,7 +962,7 @@ function loadFFmpeg() {
 
 
 /*
-    File selection
+    File selection.
 */
 
 fileInput.addEventListener(
@@ -941,8 +1009,7 @@ fileInput.addEventListener(
 
 
         /*
-            Start FFmpeg loading immediately
-            while the browser reads the video.
+            Start FFmpeg loading immediately.
         */
 
         loadFFmpeg();
@@ -952,7 +1019,7 @@ fileInput.addEventListener(
 
 
 /*
-    Video metadata
+    Video metadata.
 */
 
 source.addEventListener(
@@ -1008,7 +1075,7 @@ source.addEventListener(
 
 
 /*
-    Preview
+    Preview.
 */
 
 source.addEventListener(
@@ -1040,7 +1107,7 @@ source.addEventListener(
 
 
 /*
-    Random sequence generation
+    Random sequence generation.
 */
 
 async function createPlan() {
@@ -1064,11 +1131,8 @@ async function createPlan() {
 
 
     let totalAttempts = 0;
-
     let totalFrozenSeconds = 0;
-
     let latestAcceptedSecond = null;
-
     let lastUISecond = -1;
 
 
@@ -1084,7 +1148,6 @@ async function createPlan() {
         while (true) {
 
             attempts++;
-
             totalAttempts++;
 
 
@@ -1150,10 +1213,8 @@ async function createPlan() {
             currentSecondElement.textContent =
                 second + 1;
 
-
             attemptsElement.textContent =
                 totalAttempts.toLocaleString();
-
 
             frozenSecondsElement.textContent =
                 totalFrozenSeconds.toLocaleString();
@@ -1181,26 +1242,21 @@ async function createPlan() {
 
 
     return {
-
         plan,
-
         totalAttempts,
-
         totalFrozenSeconds
-
     };
 
 }
 
 
 /*
-    Build FFmpeg filter graph
+    Build FFmpeg filter graph.
 */
 
 function buildFilter(plan) {
 
     const filters = [];
-
     const concatInputs = [];
 
 
@@ -1213,10 +1269,6 @@ function buildFilter(plan) {
         const item =
             plan[i];
 
-
-        /*
-            Frozen seconds
-        */
 
         if (
             item.failedAttempts > 0
@@ -1285,10 +1337,6 @@ function buildFilter(plan) {
         }
 
 
-        /*
-            Normal accepted source second
-        */
-
         const start =
             item.sourceSecond;
 
@@ -1332,7 +1380,7 @@ function buildFilter(plan) {
 
 
 /*
-    Generate
+    Generate video.
 */
 
 generateButton.addEventListener(
@@ -1405,10 +1453,8 @@ generateButton.addEventListener(
             outputTimeElement.textContent =
                 formatTime(finalDuration);
 
-
             attemptsElement.textContent =
                 result.totalAttempts.toLocaleString();
-
 
             frozenSecondsElement.textContent =
                 result.totalFrozenSeconds.toLocaleString();
@@ -1424,11 +1470,6 @@ generateButton.addEventListener(
 
             await nextFrame();
 
-
-            /*
-                Move source video into FFmpeg's
-                virtual filesystem.
-            */
 
             setStatus(
                 "Preparing video..."
@@ -1450,10 +1491,6 @@ generateButton.addEventListener(
             setMainProgress(40);
 
 
-            /*
-                Build filter graph.
-            */
-
             setStatus(
                 "Building final timeline..."
             );
@@ -1465,13 +1502,8 @@ generateButton.addEventListener(
 
             setMainProgress(42);
 
-
             await nextFrame();
 
-
-            /*
-                Encode.
-            */
 
             setStatus(
                 "Encoding final video..."
@@ -1563,7 +1595,6 @@ generateButton.addEventListener(
             output.src =
                 outputURL;
 
-
             output.style.display =
                 "block";
 
@@ -1571,10 +1602,8 @@ generateButton.addEventListener(
             download.href =
                 outputURL;
 
-
             download.download =
                 "random-video.mp4";
-
 
             download.style.display =
                 "block";
@@ -1591,10 +1620,6 @@ generateButton.addEventListener(
             currentSecondElement.textContent =
                 "Done";
 
-
-            /*
-                Clean FFmpeg virtual filesystem.
-            */
 
             try {
 
@@ -1648,7 +1673,6 @@ generateButton.addEventListener(
 
             generating = false;
 
-
             fileInput.disabled =
                 false;
 
@@ -1670,7 +1694,7 @@ generateButton.addEventListener(
 
 
 /*
-    Initial state
+    Initial state.
 */
 
 setProcessorStatus(
@@ -1678,12 +1702,11 @@ setProcessorStatus(
 );
 
 setProcessorProgress(0);
-
 setMainProgress(0);
 
 
 /*
-    Diagnostic information.
+    Diagnostic URLs.
 */
 
 console.log(
