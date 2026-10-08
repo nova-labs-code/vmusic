@@ -2,12 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
->
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Random Video Generator</title>
 
 <style>
@@ -22,11 +17,7 @@ body {
     padding: 0;
     background: #0b0b0f;
     color: #f5f5f7;
-    font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 body {
@@ -249,37 +240,23 @@ button:disabled {
     <h1>Random Video Generator</h1>
 
     <p class="subtitle">
-        Every source second is eventually accepted. Failed attempts become
-        frozen seconds using the latest accepted frame.
+        Every source second is eventually accepted.
+        Failed attempts become frozen seconds using the latest accepted frame.
     </p>
 
     <div class="panel">
 
         <div class="field">
-
-            <label for="file">
-                Source video
-            </label>
-
-            <input
-                id="file"
-                type="file"
-                accept="video/*"
-            >
-
+            <label for="file">Source video</label>
+            <input id="file" type="file" accept="video/*">
         </div>
-
 
         <div class="settings">
 
             <div class="field">
-
-                <label for="chance">
-                    Chance per attempt
-                </label>
+                <label for="chance">Chance per attempt</label>
 
                 <select id="chance">
-
                     <option value="0.01">1%</option>
                     <option value="0.05">5%</option>
                     <option value="0.10">10%</option>
@@ -288,32 +265,22 @@ button:disabled {
                     <option value="0.35">35%</option>
                     <option value="0.50">50%</option>
                     <option value="0.65">65%</option>
-
                 </select>
-
             </div>
 
-
             <div class="field">
-
-                <label for="speed">
-                    Processing speed
-                </label>
+                <label for="speed">Processing speed</label>
 
                 <select id="speed">
-
                     <option value="100">100×</option>
                     <option value="500">500×</option>
                     <option value="1000" selected>1000×</option>
                     <option value="5000">5000×</option>
                     <option value="10000">10000×</option>
-
                 </select>
-
             </div>
 
         </div>
-
 
         <div class="processor">
 
@@ -321,153 +288,65 @@ button:disabled {
                 Video processor
             </div>
 
-            <div
-                class="processor-status"
-                id="processorStatus"
-            >
+            <div class="processor-status" id="processorStatus">
                 Waiting for a video.
             </div>
 
             <div class="processor-bar">
-
-                <div
-                    class="processor-bar-fill"
-                    id="processorBar"
-                ></div>
-
+                <div class="processor-bar-fill" id="processorBar"></div>
             </div>
 
         </div>
 
-
-        <button
-            id="generate"
-            disabled
-        >
+        <button id="generate" disabled>
             Generate Video
         </button>
 
-
-        <div
-            class="status"
-            id="status"
-        >
+        <div class="status" id="status">
             Choose a video.
         </div>
 
-
         <div class="progress">
-
-            <div
-                class="progress-bar"
-                id="progress"
-            ></div>
-
+            <div class="progress-bar" id="progress"></div>
         </div>
-
 
         <div class="stats">
 
             <div class="stat">
-
-                <div
-                    class="stat-value"
-                    id="currentSecond"
-                >
-                    0
-                </div>
-
-                <div class="stat-label">
-                    Current second
-                </div>
-
+                <div class="stat-value" id="currentSecond">0</div>
+                <div class="stat-label">Current second</div>
             </div>
 
-
             <div class="stat">
-
-                <div
-                    class="stat-value"
-                    id="attempts"
-                >
-                    0
-                </div>
-
-                <div class="stat-label">
-                    Attempts
-                </div>
-
+                <div class="stat-value" id="attempts">0</div>
+                <div class="stat-label">Attempts</div>
             </div>
 
-
             <div class="stat">
-
-                <div
-                    class="stat-value"
-                    id="frozenSeconds"
-                >
-                    0
-                </div>
-
-                <div class="stat-label">
-                    Frozen seconds
-                </div>
-
+                <div class="stat-value" id="frozenSeconds">0</div>
+                <div class="stat-label">Frozen seconds</div>
             </div>
 
-
             <div class="stat">
-
-                <div
-                    class="stat-value"
-                    id="outputTime"
-                >
-                    0s
-                </div>
-
-                <div class="stat-label">
-                    Output length
-                </div>
-
+                <div class="stat-value" id="outputTime">0s</div>
+                <div class="stat-label">Output length</div>
             </div>
 
         </div>
-
 
         <div class="preview">
-
             <canvas id="preview"></canvas>
-
         </div>
 
-
-        <video
-            id="source"
-            playsinline
-            muted
-            preload="metadata"
-        ></video>
-
+        <video id="source" playsinline muted preload="metadata"></video>
 
         <div class="output-box">
-
-            <video
-                id="output"
-                controls
-                playsinline
-            ></video>
-
+            <video id="output" controls playsinline></video>
         </div>
 
-
-        <a
-            id="download"
-            class="download"
-            href="#"
-        >
+        <a id="download" class="download" href="#">
             Download Generated Video
         </a>
-
 
         <div class="note">
             Failed attempts are calculated without waiting real time.
@@ -479,26 +358,58 @@ button:disabled {
 
 </div>
 
-
 <script type="module">
 
-/* =========================================================
-   FFMPEG MODULES
-   ========================================================= */
+/*
+    FFmpeg configuration
+
+    Expected GitHub Pages structure:
+
+    /
+    ├── index.html
+    └── ffmpeg/
+        ├── ffmpeg-core.js
+        └── ffmpeg-core.wasm
+*/
+
+const FFmpegWrapperURL =
+    "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/+esm";
+
+const FFmpegUtilURL =
+    "https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.2/+esm";
+
+/*
+    IMPORTANT:
+    These are resolved from the actual page URL.
+
+    If the page is:
+
+    https://username.github.io/random-video/
+
+    the resulting URLs become:
+
+    https://username.github.io/random-video/ffmpeg/ffmpeg-core.js
+    https://username.github.io/random-video/ffmpeg/ffmpeg-core.wasm
+*/
+
+const coreURL = new URL(
+    "./ffmpeg/ffmpeg-core.js",
+    window.location.href
+).href;
+
+const wasmURL = new URL(
+    "./ffmpeg/ffmpeg-core.wasm",
+    window.location.href
+).href;
+
 
 let FFmpegClass = null;
 let fetchFileFunction = null;
-let toBlobURLFunction = null;
 
 let ffmpeg = null;
-
 let ffmpegLoaded = false;
 let ffmpegLoadingPromise = null;
 
-
-/* =========================================================
-   ELEMENTS
-   ========================================================= */
 
 const fileInput =
     document.getElementById("file");
@@ -552,73 +463,46 @@ const download =
     document.getElementById("download");
 
 
-/* =========================================================
-   VIDEO STATE
-   ========================================================= */
-
 let selectedFile = null;
 
 let sourceURL = null;
+
 let outputURL = null;
 
 let videoDuration = 0;
+
 let videoWidth = 0;
+
 let videoHeight = 0;
 
 let generating = false;
 
 
-/* =========================================================
-   UI HELPERS
-   ========================================================= */
-
 function setStatus(message) {
-
-    status.textContent =
-        message;
+    status.textContent = message;
 }
 
 
 function setProcessorStatus(message) {
-
-    processorStatus.textContent =
-        message;
+    processorStatus.textContent = message;
 }
 
 
 function setProcessorProgress(value) {
-
     processorBar.style.width =
-        Math.max(
-            0,
-            Math.min(
-                100,
-                value
-            )
-        ) + "%";
+        Math.max(0, Math.min(100, value)) + "%";
 }
 
 
 function setMainProgress(value) {
-
     progress.style.width =
-        Math.max(
-            0,
-            Math.min(
-                100,
-                value
-            )
-        ) + "%";
+        Math.max(0, Math.min(100, value)) + "%";
 }
 
 
 function nextFrame() {
-
-    return new Promise(
-        resolve =>
-            requestAnimationFrame(
-                resolve
-            )
+    return new Promise(resolve =>
+        requestAnimationFrame(resolve)
     );
 }
 
@@ -629,107 +513,71 @@ function formatTime(seconds) {
         !Number.isFinite(seconds) ||
         seconds <= 0
     ) {
-
         return "0s";
     }
 
-
     if (seconds < 60) {
-
-        return (
-            Math.floor(seconds) +
-            "s"
-        );
+        return Math.floor(seconds) + "s";
     }
 
-
     const minutes =
-        Math.floor(
-            seconds / 60
-        );
-
+        Math.floor(seconds / 60);
 
     const remaining =
-        Math.floor(
-            seconds % 60
-        );
-
+        Math.floor(seconds % 60);
 
     return (
         minutes +
         ":" +
-        String(
-            remaining
-        ).padStart(
-            2,
-            "0"
-        )
+        String(remaining).padStart(2, "0")
     );
 }
 
 
 function filterNumber(value) {
-
-    return Number(
-        value.toFixed(6)
-    );
+    return Number(value.toFixed(6));
 }
 
 
-/* =========================================================
-   IMPORT FFMPEG LIBRARIES
-   ========================================================= */
+/*
+    Load only the JavaScript wrapper first.
+*/
 
 async function importFFmpegLibrary() {
 
     if (
         FFmpegClass &&
-        fetchFileFunction &&
-        toBlobURLFunction
+        fetchFileFunction
     ) {
-
         return;
     }
-
 
     setProcessorStatus(
         "Loading video processor library..."
     );
 
-
-    /*
-     * Both JavaScript modules are downloaded concurrently.
-     */
     const [
         ffmpegModule,
         utilModule
     ] = await Promise.all([
 
-        import(
-            "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/+esm"
-        ),
+        import(FFmpegWrapperURL),
 
-        import(
-            "https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.2/+esm"
-        )
+        import(FFmpegUtilURL)
 
     ]);
-
 
     FFmpegClass =
         ffmpegModule.FFmpeg;
 
     fetchFileFunction =
         utilModule.fetchFile;
-
-    toBlobURLFunction =
-        utilModule.toBlobURL;
 }
 
 
-/* =========================================================
-   CREATE FFMPEG INSTANCE
-   ========================================================= */
+/*
+    Create FFmpeg only once.
+*/
 
 function createFFmpegInstance() {
 
@@ -737,10 +585,8 @@ function createFFmpegInstance() {
         return;
     }
 
-
     ffmpeg =
         new FFmpegClass();
-
 
     ffmpeg.on(
         "log",
@@ -750,9 +596,9 @@ function createFFmpegInstance() {
                 "[FFmpeg]",
                 message
             );
+
         }
     );
-
 
     ffmpeg.on(
         "progress",
@@ -762,182 +608,93 @@ function createFFmpegInstance() {
                 !generating ||
                 !Number.isFinite(value)
             ) {
-
                 return;
             }
 
-
-            /*
-             * FFmpeg encoding occupies the final
-             * part of the main progress bar.
-             */
             const percentage =
                 42 +
                 (
                     Math.max(
                         0,
-                        Math.min(
-                            1,
-                            value
-                        )
-                    ) *
-                    53
+                        Math.min(1, value)
+                    ) * 53
                 );
-
 
             setMainProgress(
                 percentage
             );
+
         }
     );
 }
 
 
-/* =========================================================
-   LOAD FFMPEG
-   ========================================================= */
+/*
+    Load the self-hosted processor.
+
+    NO TIMEOUT.
+    If initialization takes a long time,
+    it is allowed to continue.
+*/
 
 function loadFFmpeg() {
 
     if (ffmpegLoaded) {
-
-        return Promise.resolve(
-            true
-        );
+        return Promise.resolve(true);
     }
 
-
-    /*
-     * Every caller gets the exact same promise.
-     */
     if (ffmpegLoadingPromise) {
-
         return ffmpegLoadingPromise;
     }
-
 
     ffmpegLoadingPromise =
         (async () => {
 
             try {
 
-                /*
-                 * -------------------------------------------------
-                 * STEP 1
-                 * -------------------------------------------------
-                 */
-
                 await importFFmpegLibrary();
-
 
                 createFFmpegInstance();
 
 
-                /*
-                 * -------------------------------------------------
-                 * STEP 2
-                 * -------------------------------------------------
-                 */
-
-                const baseURL =
-                    "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
-
-
-                setProcessorStatus(
-                    "Downloading processor..."
+                console.log(
+                    "FFmpeg core URL:",
+                    coreURL
                 );
 
-
-                setProcessorProgress(
-                    5
-                );
-
-
-                /*
-                 * -------------------------------------------------
-                 * IMPORTANT
-                 * -------------------------------------------------
-                 *
-                 * Do NOT pretend these downloads have reached
-                 * 45%, 75%, etc.
-                 *
-                 * toBlobURL() doesn't expose their actual
-                 * byte-by-byte progress.
-                 *
-                 * The bar therefore stays at 5% until BOTH
-                 * downloads genuinely finish.
-                 *
-                 * There is NO timeout.
-                 * There is NO forced cancellation.
-                 * -------------------------------------------------
-                 */
-
-                const corePromise =
-                    toBlobURLFunction(
-                        `${baseURL}/ffmpeg-core.js`,
-                        "text/javascript"
-                    );
-
-
-                const wasmPromise =
-                    toBlobURLFunction(
-                        `${baseURL}/ffmpeg-core.wasm`,
-                        "application/wasm"
-                    );
-
-
-                /*
-                 * Both downloads continue simultaneously.
-                 *
-                 * If WASM takes a long time, this promise simply
-                 * remains pending until the download completes.
-                 */
-                const [
-                    coreURL,
+                console.log(
+                    "FFmpeg WASM URL:",
                     wasmURL
-                ] = await Promise.all([
-
-                    corePromise,
-                    wasmPromise
-
-                ]);
-
-
-                /*
-                 * The downloads are genuinely finished here.
-                 */
-                setProcessorProgress(
-                    70
                 );
 
+
+                setProcessorProgress(10);
 
                 setProcessorStatus(
-                    "Initializing processor..."
+                    "Loading processor..."
                 );
 
 
                 /*
-                 * No timeout.
-                 */
+                    This is intentionally NOT using
+                    toBlobURL().
+
+                    The files are being served from
+                    the same GitHub Pages origin.
+                */
+
                 await ffmpeg.load({
 
-                    coreURL,
-                    wasmURL
+                    coreURL: coreURL,
+
+                    wasmURL: wasmURL
 
                 });
 
 
-                /*
-                 * FFmpeg is genuinely ready.
-                 */
-                ffmpegLoaded =
-                    true;
+                ffmpegLoaded = true;
 
-
-                setProcessorProgress(
-                    100
-                );
-
+                setProcessorProgress(100);
 
                 setProcessorStatus(
                     "Ready."
@@ -945,14 +702,12 @@ function loadFFmpeg() {
 
 
                 if (selectedFile) {
-
                     generateButton.disabled =
                         false;
                 }
 
 
                 return true;
-
 
             } catch (error) {
 
@@ -961,16 +716,13 @@ function loadFFmpeg() {
                     error
                 );
 
-
                 setProcessorStatus(
-                    "Processor encountered an error. You can try again."
+                    "Processor encountered an error."
                 );
-
 
                 setStatus(
-                    "The processor encountered an error while loading."
+                    "The processor could not initialize. Check the browser console for the exact error."
                 );
-
 
                 return false;
 
@@ -978,18 +730,18 @@ function loadFFmpeg() {
 
                 ffmpegLoadingPromise =
                     null;
+
             }
 
         })();
-
 
     return ffmpegLoadingPromise;
 }
 
 
-/* =========================================================
-   FILE SELECTION
-   ========================================================= */
+/*
+    File selection
+*/
 
 fileInput.addEventListener(
     "change",
@@ -998,23 +750,17 @@ fileInput.addEventListener(
         const file =
             fileInput.files?.[0];
 
-
         if (!file) {
             return;
         }
 
-
         selectedFile =
             file;
-
 
         generateButton.disabled =
             true;
 
 
-        /*
-         * Clean up the old source URL.
-         */
         if (sourceURL) {
 
             URL.revokeObjectURL(
@@ -1027,14 +773,10 @@ fileInput.addEventListener(
 
 
         sourceURL =
-            URL.createObjectURL(
-                file
-            );
-
+            URL.createObjectURL(file);
 
         source.src =
             sourceURL;
-
 
         source.load();
 
@@ -1045,20 +787,19 @@ fileInput.addEventListener(
 
 
         /*
-         * FFmpeg loading starts in the background.
-         *
-         * Metadata loading and processor downloading can
-         * happen at the same time.
-         */
+            Start FFmpeg loading immediately
+            while the browser reads the video metadata.
+        */
+
         loadFFmpeg();
 
     }
 );
 
 
-/* =========================================================
-   VIDEO METADATA
-   ========================================================= */
+/*
+    Video metadata
+*/
 
 source.addEventListener(
     "loadedmetadata",
@@ -1075,9 +816,7 @@ source.addEventListener(
 
 
         if (
-            !Number.isFinite(
-                videoDuration
-            ) ||
+            !Number.isFinite(videoDuration) ||
             videoDuration <= 0 ||
             videoWidth <= 0 ||
             videoHeight <= 0
@@ -1107,15 +846,16 @@ source.addEventListener(
 
             generateButton.disabled =
                 false;
+
         }
 
     }
 );
 
 
-/* =========================================================
-   FIRST FRAME
-   ========================================================= */
+/*
+    Preview
+*/
 
 source.addEventListener(
     "loadeddata",
@@ -1137,60 +877,45 @@ source.addEventListener(
                 "Preview frame unavailable:",
                 error
             );
+
         }
 
     },
-    {
-        once: true
-    }
+    { once: true }
 );
 
 
-/* =========================================================
-   RANDOM PLAN
-   ========================================================= */
+/*
+    Random sequence generation
+*/
 
 async function createPlan() {
 
     const probability =
-        Number(
-            chanceInput.value
-        );
-
+        Number(chanceInput.value);
 
     const processingSpeed =
         Math.max(
             1,
-            Number(
-                speedInput.value
-            )
+            Number(speedInput.value)
         );
 
 
     const totalSeconds =
-        Math.ceil(
-            videoDuration
-        );
+        Math.ceil(videoDuration);
 
 
     const plan =
-        new Array(
-            totalSeconds
-        );
+        new Array(totalSeconds);
 
 
-    let totalAttempts =
-        0;
+    let totalAttempts = 0;
 
-    let totalFrozenSeconds =
-        0;
+    let totalFrozenSeconds = 0;
 
-    let latestAcceptedSecond =
-        null;
+    let latestAcceptedSecond = null;
 
-
-    let lastUISecond =
-        -1;
+    let lastUISecond = -1;
 
 
     for (
@@ -1199,13 +924,13 @@ async function createPlan() {
         second++
     ) {
 
-        let attempts =
-            0;
+        let attempts = 0;
 
 
         while (true) {
 
             attempts++;
+
             totalAttempts++;
 
 
@@ -1213,14 +938,15 @@ async function createPlan() {
                 Math.random() <
                 probability
             ) {
-
                 break;
             }
 
 
             /*
-             * Yield to the browser periodically.
-             */
+                Yield occasionally so the
+                browser UI stays responsive.
+            */
+
             if (
                 attempts %
                 processingSpeed ===
@@ -1228,7 +954,9 @@ async function createPlan() {
             ) {
 
                 await nextFrame();
+
             }
+
         }
 
 
@@ -1245,11 +973,14 @@ async function createPlan() {
             sourceSecond:
                 second,
 
-            attempts,
+            attempts:
+                attempts,
 
-            failedAttempts,
+            failedAttempts:
+                failedAttempts,
 
-            latestAcceptedSecond
+            latestAcceptedSecond:
+                latestAcceptedSecond
 
         };
 
@@ -1258,9 +989,6 @@ async function createPlan() {
             second;
 
 
-        /*
-         * Don't hammer the DOM during the calculation.
-         */
         if (
             second - lastUISecond >= 5 ||
             second === totalSeconds - 1
@@ -1283,16 +1011,11 @@ async function createPlan() {
 
 
             setMainProgress(
-
                 5 +
                 (
-                    (
-                        second + 1
-                    ) /
+                    (second + 1) /
                     totalSeconds
-                ) *
-                30
-
+                ) * 30
             );
 
 
@@ -1302,7 +1025,9 @@ async function createPlan() {
 
 
             await nextFrame();
+
         }
+
     }
 
 
@@ -1315,12 +1040,13 @@ async function createPlan() {
         totalFrozenSeconds
 
     };
+
 }
 
 
-/* =========================================================
-   BUILD FFMPEG FILTER
-   ========================================================= */
+/*
+    Build FFmpeg filter graph
+*/
 
 function buildFilter(plan) {
 
@@ -1340,10 +1066,8 @@ function buildFilter(plan) {
 
 
         /*
-         * -----------------------------------------------------
-         * FAILED ATTEMPTS
-         * -----------------------------------------------------
-         */
+            Frozen seconds
+        */
 
         if (
             item.failedAttempts > 0
@@ -1353,33 +1077,21 @@ function buildFilter(plan) {
                 `freeze${i}`;
 
 
-            /*
-             * BEFORE FIRST ACCEPTED SECOND
-             */
-
             if (
-                item.latestAcceptedSecond ===
-                null
+                item.latestAcceptedSecond === null
             ) {
 
                 filters.push(
-
-                    `[0:v]` +
-                    `trim=start=0:end=0.001,` +
+                    `[0:v]trim=start=0:end=0.001,` +
                     `setpts=PTS-STARTPTS,` +
                     `tpad=stop_mode=clone:` +
                     `stop_duration=${filterNumber(item.failedAttempts)},` +
                     `trim=duration=${filterNumber(item.failedAttempts)},` +
                     `setpts=PTS-STARTPTS` +
                     `[${freezeLabel}]`
-
                 );
 
             } else {
-
-                /*
-                 * AFTER AN ACCEPTED SECOND
-                 */
 
                 const previous =
                     item.latestAcceptedSecond;
@@ -1400,9 +1112,9 @@ function buildFilter(plan) {
 
 
                 filters.push(
-
-                    `[0:v]` +
-                    `trim=start=${filterNumber(windowStart)}:end=${filterNumber(previousEnd)},` +
+                    `[0:v]trim=` +
+                    `start=${filterNumber(windowStart)}:` +
+                    `end=${filterNumber(previousEnd)},` +
                     `setpts=PTS-STARTPTS,` +
                     `reverse,` +
                     `trim=start_frame=0:end_frame=1,` +
@@ -1412,22 +1124,21 @@ function buildFilter(plan) {
                     `trim=duration=${filterNumber(item.failedAttempts)},` +
                     `setpts=PTS-STARTPTS` +
                     `[${freezeLabel}]`
-
                 );
+
             }
 
 
             concatInputs.push(
                 `[${freezeLabel}]`
             );
+
         }
 
 
         /*
-         * -----------------------------------------------------
-         * ACCEPTED SOURCE SECOND
-         * -----------------------------------------------------
-         */
+            Normal accepted source second
+        */
 
         const start =
             item.sourceSecond;
@@ -1445,40 +1156,35 @@ function buildFilter(plan) {
 
 
         filters.push(
-
-            `[0:v]` +
-            `trim=start=${filterNumber(start)}:end=${filterNumber(end)},` +
+            `[0:v]trim=` +
+            `start=${filterNumber(start)}:` +
+            `end=${filterNumber(end)},` +
             `setpts=PTS-STARTPTS` +
             `[${segmentLabel}]`
-
         );
 
 
         concatInputs.push(
             `[${segmentLabel}]`
         );
+
     }
 
 
-    /*
-     * FINAL CONCAT
-     */
-
     filters.push(
-
         concatInputs.join("") +
         `concat=n=${concatInputs.length}:v=1:a=0[outv]`
-
     );
 
 
     return filters.join(";");
+
 }
 
 
-/* =========================================================
-   GENERATE
-   ========================================================= */
+/*
+    Generate
+*/
 
 generateButton.addEventListener(
     "click",
@@ -1488,16 +1194,10 @@ generateButton.addEventListener(
             generating ||
             !selectedFile
         ) {
-
             return;
         }
 
 
-        /*
-         * If FFmpeg isn't ready yet, wait for it.
-         *
-         * There is still no timeout.
-         */
         if (!ffmpegLoaded) {
 
             setStatus(
@@ -1512,12 +1212,11 @@ generateButton.addEventListener(
             if (!loaded) {
                 return;
             }
+
         }
 
 
-        generating =
-            true;
-
+        generating = true;
 
         generateButton.disabled =
             true;
@@ -1534,18 +1233,11 @@ generateButton.addEventListener(
 
         try {
 
-            /* =================================================
-               PHASE 1 — RANDOM CALCULATION
-               ================================================= */
-
             setStatus(
                 "Calculating random sequence..."
             );
 
-
-            setMainProgress(
-                0
-            );
+            setMainProgress(0);
 
 
             const result =
@@ -1562,24 +1254,18 @@ generateButton.addEventListener(
 
 
             outputTimeElement.textContent =
-                formatTime(
-                    finalDuration
-                );
+                formatTime(finalDuration);
 
 
             attemptsElement.textContent =
-                result.totalAttempts
-                    .toLocaleString();
+                result.totalAttempts.toLocaleString();
 
 
             frozenSecondsElement.textContent =
-                result.totalFrozenSeconds
-                    .toLocaleString();
+                result.totalFrozenSeconds.toLocaleString();
 
 
-            setMainProgress(
-                35
-            );
+            setMainProgress(35);
 
 
             setStatus(
@@ -1590,9 +1276,10 @@ generateButton.addEventListener(
             await nextFrame();
 
 
-            /* =================================================
-               PHASE 2 — WRITE INPUT
-               ================================================= */
+            /*
+                Move source video into FFmpeg's
+                virtual filesystem.
+            */
 
             setStatus(
                 "Preparing video..."
@@ -1611,14 +1298,12 @@ generateButton.addEventListener(
             );
 
 
-            setMainProgress(
-                40
-            );
+            setMainProgress(40);
 
 
-            /* =================================================
-               PHASE 3 — BUILD TIMELINE
-               ================================================= */
+            /*
+                Build filter graph.
+            */
 
             setStatus(
                 "Building final timeline..."
@@ -1626,34 +1311,24 @@ generateButton.addEventListener(
 
 
             const filter =
-                buildFilter(
-                    plan
-                );
+                buildFilter(plan);
 
 
-            setMainProgress(
-                42
-            );
+            setMainProgress(42);
 
 
             await nextFrame();
 
 
-            /* =================================================
-               PHASE 4 — ENCODE
-               ================================================= */
+            /*
+                Encode.
+            */
 
             setStatus(
                 "Encoding final video..."
             );
 
 
-            /*
-             * NO TIMEOUT.
-             *
-             * FFmpeg is allowed to continue until it
-             * naturally finishes or produces a real error.
-             */
             const exitCode =
                 await ffmpeg.exec([
 
@@ -1691,24 +1366,17 @@ generateButton.addEventListener(
                 ]);
 
 
-            if (
-                exitCode !== 0
-            ) {
+            if (exitCode !== 0) {
 
                 throw new Error(
                     "FFmpeg returned an encoding error."
                 );
+
             }
 
 
-            setMainProgress(
-                95
-            );
+            setMainProgress(95);
 
-
-            /* =================================================
-               PHASE 5 — FINALIZE
-               ================================================= */
 
             setStatus(
                 "Finalizing generated video..."
@@ -1725,8 +1393,7 @@ generateButton.addEventListener(
                 new Blob(
                     [data],
                     {
-                        type:
-                            "video/mp4"
+                        type: "video/mp4"
                     }
                 );
 
@@ -1736,13 +1403,12 @@ generateButton.addEventListener(
                 URL.revokeObjectURL(
                     outputURL
                 );
+
             }
 
 
             outputURL =
-                URL.createObjectURL(
-                    blob
-                );
+                URL.createObjectURL(blob);
 
 
             output.src =
@@ -1765,9 +1431,7 @@ generateButton.addEventListener(
                 "block";
 
 
-            setMainProgress(
-                100
-            );
+            setMainProgress(100);
 
 
             setStatus(
@@ -1780,8 +1444,9 @@ generateButton.addEventListener(
 
 
             /*
-             * Clean FFmpeg's virtual filesystem.
-             */
+                Clean FFmpeg virtual filesystem.
+            */
+
             try {
 
                 await ffmpeg.deleteFile(
@@ -1794,6 +1459,7 @@ generateButton.addEventListener(
                     "Input cleanup:",
                     error
                 );
+
             }
 
 
@@ -1809,6 +1475,7 @@ generateButton.addEventListener(
                     "Output cleanup:",
                     error
                 );
+
             }
 
 
@@ -1828,11 +1495,9 @@ generateButton.addEventListener(
                 )
             );
 
-
         } finally {
 
-            generating =
-                false;
+            generating = false;
 
 
             fileInput.disabled =
@@ -1848,26 +1513,45 @@ generateButton.addEventListener(
             generateButton.disabled =
                 !ffmpegLoaded ||
                 !selectedFile;
+
         }
 
     }
 );
 
 
-/* =========================================================
-   INITIAL STATE
-   ========================================================= */
+/*
+    Initial state
+*/
 
 setProcessorStatus(
     "Waiting for a video."
 );
 
-setProcessorProgress(
-    0
+setProcessorProgress(0);
+
+setMainProgress(0);
+
+
+/*
+    Helpful diagnostic information.
+
+    These appear in the browser console and make
+    incorrect GitHub paths immediately obvious.
+*/
+
+console.log(
+    "Random Video Generator loaded."
 );
 
-setMainProgress(
-    0
+console.log(
+    "FFmpeg core:",
+    coreURL
+);
+
+console.log(
+    "FFmpeg WASM:",
+    wasmURL
 );
 
 </script>
